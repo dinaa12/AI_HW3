@@ -167,7 +167,13 @@ def best_m_test(x_train, y_train, x_test, y_test, min_for_pruning):
     acc = None
 
     # ====== YOUR CODE: ======
-    raise NotImplementedError
+
+    id3_model = ID3(label_names=attributes_names, min_for_pruning=min_for_pruning)
+    id3_model.fit(x_train, y_train)
+    predictions = id3_model.predict(x_test)
+
+    acc = accuracy(y_test, predictions)
+
     # ========================
 
     return acc
@@ -185,7 +191,7 @@ if __name__ == '__main__':
     """
     formatted_print = True
     basic_experiment(*data_split, formatted_print)
-    exit()
+
     """
        cross validation experiment
        (*) To run the cross validation experiment over the  M pruning hyper-parameter 

@@ -222,7 +222,13 @@ class ID3:
             else:
                 node = node.false_branch
 
-        prediction = list(node.predictions.keys())[0]
+        max_value = - math.inf
+        pred_key = None
+        for key, value in node.predictions.items():
+            if value > max_value:
+                pred_key = key
+
+        prediction = pred_key
 
         # ========================
 
