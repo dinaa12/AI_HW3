@@ -29,7 +29,22 @@ def get_top_b_features(x, y, b=5, k=51):
     top_b_features_indices = []
 
     # ====== YOUR CODE: ======
-    raise NotImplementedError
+
+    x_t = x.T
+    cov_list = []
+
+    for idx, row in enumerate(x_t):  # = for col in x
+        array = (row, y)
+        cov_matrix = np.cov(array)
+        cov = abs(cov_matrix[0][1])
+        cov_list.append((cov, idx))
+
+    cov_list.sort(key=lambda tup:tup[0], reverse=True)
+    print(cov_list)
+    top_b_cov = cov_list[0:b]
+    print(top_b_cov)
+    top_b_features_indices = [x[1] for x in top_b_cov]
+    print(top_b_features_indices)
     # ========================
 
     return top_b_features_indices
@@ -55,7 +70,7 @@ if __name__ == '__main__':
             To run the cross validation experiment over the K,Threshold hyper-parameters
             uncomment below code and run it
     """
-    # run_cross_validation()
+    run_cross_validation()
 
     # # ========================================================================
 
@@ -64,8 +79,8 @@ if __name__ == '__main__':
                                                          test_set=test_dataset,
                                                          target_attribute='Outcome')
 
-    best_k = 51
-    b = 0
+    best_k = 21
+    b = 3
 
     # # ========================================================================
 
