@@ -1,6 +1,6 @@
 import math
 
-from DecisonTree import Leaf, Question, DecisionNode, class_counts
+from DecisonTree import Leaf, Question, DecisionNode, class_counts, unique_vals
 from utils import *
 
 """
@@ -32,7 +32,11 @@ class ID3:
         impurity = 0.0
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError
+
+        for label in set(labels):
+            p_label = counts[label] / len(rows)
+            impurity -= (p_label * np.log2(p_label))
+
         # ========================
 
         return impurity
@@ -56,7 +60,16 @@ class ID3:
 
         info_gain_value = 0.0
         # ====== YOUR CODE: ======
-        raise NotImplementedError
+
+        entropy_left_child = self.entropy(left, left_labels)
+        entropy_right_child = self.entropy(right, right_labels)
+
+        L = len(left)
+        R = len(right)
+        E = L+R
+
+        info_gain_value = current_uncertainty - (L/E) * entropy_left_child - (R/E) * entropy_right_child
+
         # ========================
 
         return info_gain_value
@@ -79,7 +92,24 @@ class ID3:
         assert len(rows) == len(labels), 'Rows size should be equal to labels size.'
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError
+
+        true_rows, true_labels, false_rows, false_labels = [], [], [], []
+
+        for idx, row in enumerate(rows):
+            if question.match(row):
+                true_rows.append(row)
+                true_labels.append(labels[idx])
+            else:
+                false_rows.append(row)
+                false_labels.append(labels[idx])
+
+        true_rows = np.array(true_rows)
+        true_labels = np.array(true_labels)
+        false_rows = np.array(false_rows)
+        false_labels = np.array(false_labels)
+
+        gain = self.info_gain(true_rows, true_labels, false_rows, false_labels, current_uncertainty)
+
         # ========================
 
         return gain, true_rows, true_labels, false_rows, false_labels
@@ -101,7 +131,27 @@ class ID3:
         current_uncertainty = self.entropy(rows, labels)
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError
+
+        used = ()
+        cols_num = rows.shape[1]
+
+        for col_idx in range(cols_num):
+            optional_thresholds = unique_vals(rows, col_idx)
+
+            for threshold in optional_thresholds:
+                if len(self.used_features) != 0 and (col_idx, threshold) in self.used_features:
+                    continue
+
+                curr_question = Question(self.label_names[col_idx], col_idx, threshold)
+                curr_partition = self.partition(rows, labels, curr_question, current_uncertainty)
+
+                if curr_partition[0] >= best_gain:
+                    best_gain, best_true_rows, best_true_labels, best_false_rows, best_false_labels = curr_partition
+                    best_question = curr_question
+                    used = (col_idx, threshold)
+
+        self.used_features.add(used)
+
         # ========================
 
         return best_gain, best_question, best_true_rows, best_true_labels, best_false_rows, best_false_labels
@@ -123,7 +173,15 @@ class ID3:
         true_branch, false_branch = None, None
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError
+
+        if len(rows) <= self.min_for_pruning or self.entropy(rows, labels) == 0:
+            return Leaf(rows, labels)
+
+        best_gain, best_question, best_true_rows, best_true_labels, best_false_rows, best_false_labels = \
+            self.find_best_split(rows, labels)
+        true_branch = self.build_tree(best_true_rows, best_true_labels)
+        false_branch = self.build_tree(best_false_rows, best_false_labels)
+
         # ========================
 
         return DecisionNode(best_question, true_branch, false_branch)
@@ -137,7 +195,9 @@ class ID3:
         # TODO: Build the tree that fits the input data and save the root to self.tree_root
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError
+
+        self.tree_root = self.build_tree(x_train, y_train)
+
         # ========================
 
     def predict_sample(self, row, node: DecisionNode or Leaf = None):
@@ -155,7 +215,15 @@ class ID3:
         prediction = None
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError
+
+        while type(node) is not Leaf:
+            if node.question.match(row):
+                node = node.true_branch
+            else:
+                node = node.false_branch
+
+        prediction = list(node.predictions.keys())[0]
+
         # ========================
 
         return prediction
@@ -172,7 +240,13 @@ class ID3:
         y_pred = None
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError
+
+        y_pred = []
+        for row in rows:
+            y_pred.append(self.predict_sample(row))
+
+        y_pred = np.array(y_pred)
+
         # ========================
 
         return y_pred
