@@ -226,6 +226,7 @@ class ID3:
         pred_key = None
         for key, value in node.predictions.items():
             if value > max_value:
+                max_value = value
                 pred_key = key
 
         prediction = pred_key
