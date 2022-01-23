@@ -1,4 +1,5 @@
 import subprocess
+import random
 
 from KNN import KNNClassifier
 from utils import *
@@ -14,7 +15,7 @@ def run_knn(k, x_train, y_train, x_test, y_test, formatted_print=True):
     print(f'{acc * 100:.2f}%' if formatted_print else acc)
 
 
-def get_top_b_features(x, y, b=5, k=51):
+def get_top_b_features(x, y, y_test, b=5, k=51):
     """
     :param k: Number of nearest neighbors.
     :param x: array-like of shape (n_samples, n_features).
@@ -30,23 +31,44 @@ def get_top_b_features(x, y, b=5, k=51):
 
     # ====== YOUR CODE: ======
 
+    # calc cov per feature #
     x_t = x.T
     cov_list = []
-
-    for idx, row in enumerate(x_t):  # = for col in x
+    for feature_idx, row in enumerate(x_t):  # = for col in x
         array = (row, y)
         cov_matrix = np.cov(array)
         cov = abs(cov_matrix[0][1])
-        cov_list.append((cov, idx))
-
+        cov_list.append((cov, feature_idx))
     cov_list.sort(key=lambda tup:tup[0], reverse=True)
-    print(cov_list)
-    top_b_cov = cov_list[0:b]
-    print(top_b_cov)
-    top_b_features_indices = [x[1] for x in top_b_cov]
-    print(top_b_features_indices)
-    # ========================
 
+    # calc acc per feature #
+    acc_list = []
+    for feature_idx in range(8):
+        x_train_new = x_train[:, feature_idx]
+        x_test_test = x_test[:, feature_idx]
+        # run_knn #
+        neigh = KNNClassifier(k=best_k)
+        neigh.train(x_train_new, y)
+        y_pred = neigh.predict(x_test_test)
+        acc = accuracy(y_test, y_pred)
+        acc_list.append((acc, feature_idx))
+    acc_list.sort(key=lambda tup:tup[0], reverse=True)
+
+    # calc weighted sum of acc and cov per feature #
+    acc_and_cov_list = [0, 0, 0, 0, 0, 0, 0, 0]
+    for i in range(8):
+        acc_and_cov_list[acc_list[i][1]] += 0.8*i
+        acc_and_cov_list[cov_list[i][1]] += 0.2*i
+
+    acc_and_cov_list_for_sort = []
+    for i in range(8):
+        acc_and_cov_list_for_sort.append((acc_and_cov_list[i], i))
+
+    acc_and_cov_list_for_sort.sort(key=lambda tup: tup[0])
+    top_b = acc_and_cov_list_for_sort[0:b]
+    top_b_features_indices = [x[1] for x in top_b]
+
+    # ========================
     return top_b_features_indices
 
 
@@ -70,7 +92,7 @@ if __name__ == '__main__':
             To run the cross validation experiment over the K,Threshold hyper-parameters
             uncomment below code and run it
     """
-    run_cross_validation()
+    #run_cross_validation()
 
     # # ========================================================================
 
@@ -79,8 +101,8 @@ if __name__ == '__main__':
                                                          test_set=test_dataset,
                                                          target_attribute='Outcome')
 
-    best_k = 21
-    b = 3
+    best_k = 51
+    b = 4
 
     # # ========================================================================
 
@@ -88,7 +110,7 @@ if __name__ == '__main__':
     exp_print('KNN in raw data: ')
     run_knn(best_k, x_train, y_train, x_test, y_test)
 
-    top_m = get_top_b_features(x_train, y_train, b=b, k=best_k)
+    top_m = get_top_b_features(x_train, y_train, y_test, b=b, k=best_k)
     x_train_new = x_train[:, top_m]
     x_test_test = x_test[:, top_m]
     exp_print(f'KNN in selected feature data: ')
