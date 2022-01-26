@@ -28,7 +28,6 @@ def find_best_pruning_m(train_dataset: np.array, m_choices, num_folds=5):
     """
     accuracies = []
     for i, m in enumerate(m_choices):
-        print('m = ', m)
         model = ID3(label_names=attributes_names, min_for_pruning=m)
         # TODO:
         #  - Add a KFold instance of sklearn.model_selection, pass <ID> as random_state argument.
@@ -49,10 +48,8 @@ def find_best_pruning_m(train_dataset: np.array, m_choices, num_folds=5):
             model.fit(x_train, y_train)  # train
             predictions = model.predict(x_test)
             acc = accuracy(y_test, predictions)
-            print('acc = ', acc)
             accuracies_per_m.append(acc)
-        print('avg = ', np.mean(accuracies_per_m))
-        print()
+
         accuracies.append(accuracies_per_m)
         # ========================
 
@@ -195,6 +192,5 @@ if __name__ == '__main__':
         (*) To run the experiment uncomment below code and run it
     """
     acc = best_m_test(*data_split, min_for_pruning=best_m)
-    print(acc)
     assert acc > 0.95, 'you should get an accuracy of at least 95% for the pruned ID3 decision tree'
     print(f'Test Accuracy: {acc * 100:.2f}%' if formatted_print else acc)
