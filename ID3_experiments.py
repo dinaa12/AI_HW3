@@ -105,15 +105,15 @@ def cross_validation_experiment(plot_graph=True):
 
     best_m = None
     accuracies = []
-    m_choices = [10, 50]
+    m_choices = [30, 50, 70, 90, 110]
     num_folds = 5
-    if len(m_choices) < 2:
+    if len(m_choices) < 5:
         print('fill the m_choices list with  at least 5 different values for M.')
         return None
 
     # ====== YOUR CODE: ======
 
-    assert len(m_choices) >= 2, 'fill the m_choices list with  at least 5 different values for M.'
+    assert len(m_choices) >= 5, 'fill the m_choices list with  at least 5 different values for M.'
     best_m, accuracies = find_best_pruning_m(train_dataset, m_choices, num_folds)
     """
     id3_model = ID3(label_names=attributes_names, min_for_pruning=best_m)
@@ -125,7 +125,7 @@ def cross_validation_experiment(plot_graph=True):
 
     # ========================
     accuracies_mean = np.array([np.mean(acc) * 100 for acc in accuracies])
-    if len(m_choices) >= 2 and plot_graph:
+    if len(m_choices) >= 5 and plot_graph:
         util_plot_graph(x=m_choices, y=accuracies_mean, x_label='M', y_label='Validation Accuracy %')
         print('{:^10s} | {:^10s}'.format('M value', 'Validation Accuracy'))
         for i, m in enumerate(m_choices):
