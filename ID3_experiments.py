@@ -102,7 +102,7 @@ def cross_validation_experiment(plot_graph=True):
 
     best_m = None
     accuracies = []
-    m_choices = [30, 50, 70, 90, 110]
+    m_choices = [50, 110, 150, 170, 200]
     num_folds = 5
     if len(m_choices) < 5:
         print('fill the m_choices list with  at least 5 different values for M.')
@@ -175,7 +175,7 @@ if __name__ == '__main__':
         modify the call "utils.set_formatted_values(value=False)" from False to True and run it
     """
     formatted_print = True
-    basic_experiment(*data_split, formatted_print)
+    #basic_experiment(*data_split, formatted_print)
 
     """
        cross validation experiment
