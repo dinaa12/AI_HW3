@@ -175,7 +175,7 @@ if __name__ == '__main__':
         modify the call "utils.set_formatted_values(value=False)" from False to True and run it
     """
     formatted_print = True
-    #basic_experiment(*data_split, formatted_print)
+    basic_experiment(*data_split, formatted_print)
 
     """
        cross validation experiment
