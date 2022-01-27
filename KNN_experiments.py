@@ -1,7 +1,9 @@
 import subprocess
+import copy
 
 from KNN import KNNClassifier
 from utils import *
+
 
 target_attribute = 'Outcome'
 
@@ -29,9 +31,78 @@ def get_top_b_features(x, y, b=5, k=51):
     top_b_features_indices = []
 
     # ====== YOUR CODE: ======
-    raise NotImplementedError
-    # ========================
 
+    # calc cov per feature #
+    x_t = x.T
+    cov_list = []
+    for feature_idx, row in enumerate(x_t):  # = for col in x
+        array = (row, y)
+        cov_matrix = np.cov(array)
+        cov = abs(cov_matrix[0][1])
+        cov_list.append((cov, feature_idx))
+    cov_list.sort(key=lambda tup:tup[0], reverse=True)
+
+
+    # calc acc per feature #
+    acc_list = []
+
+    _x = x[:]
+    _y = y[:]
+
+    for feature_idx in range(8):
+        # do K-fold
+        acc_per_feature = []
+        for i in range(10):
+            x_test = _x[0: (int(_x.shape[0] / 10))]
+            x_train = _x[(int(_x.shape[0] / 10)) + 1:]
+            y_test = _y[0: (int(_y.shape[0] / 10))]
+            y_train = _y[(int(_y.shape[0] / 10)) + 1:]
+
+            x_train_new = x_train[:, feature_idx]
+            x_test_test = x_test[:, feature_idx]
+            # run_knn #
+            neigh = KNNClassifier(k=k)
+            neigh.train(x_train_new, y_train)
+            y_pred = neigh.predict(x_test_test)
+            acc = accuracy(y_test, y_pred)
+            acc_per_feature.append(acc)
+
+            new_x = np.concatenate((_x[(int(_x.shape[0] / 10)) + 1:], _x[0: (int(_x.shape[0] / 10))]))
+            _x = new_x
+
+            new_y = np.concatenate((_y[(int(_y.shape[0] / 10)) + 1:], _y[0: (int(_y.shape[0] / 10))]))
+            _y = new_y
+
+        mean_acc = np.argmax([np.mean(acc) for acc in acc_per_feature])
+        acc_list.append((mean_acc, feature_idx))
+
+    acc_list.sort(key=lambda tup:tup[0], reverse=True)
+
+
+    # calc variance per #
+    x_t = x.T
+    var_list = []
+    for feature_idx, row in enumerate(x_t):  # = for col in x
+        var_list.append((np.var(row), feature_idx))
+    var_list.sort(key=lambda tup: tup[0], reverse=True)
+
+
+    # calc weighted sum of acc and cov per feature #
+    acc_and_cov_list = [0, 0, 0, 0, 0, 0, 0, 0]
+    for i in range(8):
+        acc_and_cov_list[acc_list[i][1]] += 0.3 * i
+        acc_and_cov_list[cov_list[i][1]] += 0.3 * i
+        acc_and_cov_list[var_list[i][1]] += 0.3 * i
+
+    acc_and_cov_list_for_sort = []
+    for i in range(8):
+        acc_and_cov_list_for_sort.append((acc_and_cov_list[i], i))
+
+    acc_and_cov_list_for_sort.sort(key=lambda tup: tup[0])
+    top_b = acc_and_cov_list_for_sort[0:b]
+    top_b_features_indices = [x[1] for x in top_b]
+
+    # ========================
     return top_b_features_indices
 
 
@@ -55,7 +126,7 @@ if __name__ == '__main__':
             To run the cross validation experiment over the K,Threshold hyper-parameters
             uncomment below code and run it
     """
-    # run_cross_validation()
+    #run_cross_validation()
 
     # # ========================================================================
 
@@ -65,7 +136,7 @@ if __name__ == '__main__':
                                                          target_attribute='Outcome')
 
     best_k = 51
-    b = 0
+   # b = 4
 
     # # ========================================================================
 
@@ -73,8 +144,11 @@ if __name__ == '__main__':
     exp_print('KNN in raw data: ')
     run_knn(best_k, x_train, y_train, x_test, y_test)
 
-    top_m = get_top_b_features(x_train, y_train, b=b, k=best_k)
-    x_train_new = x_train[:, top_m]
-    x_test_test = x_test[:, top_m]
-    exp_print(f'KNN in selected feature data: ')
-    run_knn(best_k, x_train_new, y_train, x_test_test, y_test)
+    for b in range(7):
+        b += 1
+        print('b: ', b)
+        top_m = get_top_b_features(x_train, y_train, b=b, k=best_k)
+        x_train_new = x_train[:, top_m]
+        x_test_test = x_test[:, top_m]
+        exp_print(f'KNN in selected feature data: ')
+        run_knn(best_k, x_train_new, y_train, x_test_test, y_test)
